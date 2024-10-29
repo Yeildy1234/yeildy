@@ -1,0 +1,454 @@
+import { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Youtube, FileText, MessageSquare, Facebook, Watch, Bluetooth, Activity, Search, Phone, Upload, Send } from 'lucide-react'
+import { Progress } from "@/components/ui/progress"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
+
+export default function WorkoutGymApp() {
+  const [activeTab, setActiveTab] = useState('home')
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [loginCode, setLoginCode] = useState('')
+  const [loginAttempts, setLoginAttempts] = useState(0)
+  const [isLocked, setIsLocked] = useState(false)
+  const [lockTimer, setLockTimer] = useState(0)
+  const [isWatchConnected, setIsWatchConnected] = useState(false)
+  const [caloriesBurned, setCaloriesBurned] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [coverPhoto, setCoverPhoto] = useState('https://v0.dev/placeholder.svg?height=400&width=800')
+  const [videoSlides, setVideoSlides] = useState(Array(6).fill(''))
+  const [members, setMembers] = useState([
+    { id: 1, name: 'John Doe', caloriesBurned: 500 },
+    { id: 2, name: 'Jane Smith', caloriesBurned: 750 },
+    { id: 3, name: 'Bob Johnson', caloriesBurned: 600 },
+  ])
+  const [selectedMembers, setSelectedMembers] = useState([])
+  const [messageContent, setMessageContent] = useState('')
+  const [exerciseData, setExerciseData] = useState([
+    { name: 'Mon', calories: 400 },
+    { name: 'Tue', calories: 300 },
+    { name: 'Wed', calories: 500 },
+    { name: 'Thu', calories: 450 },
+    { name: 'Fri', calories: 600 },
+    { name: 'Sat', calories: 400 },
+    { name: 'Sun', calories: 350 },
+  ])
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const handleLogin = () => {
+    if (loginCode === 'wogapple') {
+      setLoggedIn(true)
+      setIsAdmin(true)
+      setLoginAttempts(0)
+    } else {
+      // In a real app, you'd verify the login code here
+      const isCorrectCode = loginCode === '123456' // Replace with actual verification
+
+      if (isCorrectCode) {
+        setLoggedIn(true)
+        setLoginAttempts(0)
+      } else {
+        setLoginAttempts(prev => prev + 1)
+        if (loginAttempts + 1 >= 6) {
+          setIsLocked(true)
+          setLockTimer(300) // 5 minutes in seconds
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    let interval
+    if (isLocked && lockTimer > 0) {
+      interval = setInterval(() => {
+        setLockTimer(prev => prev - 1)
+      }, 1000)
+    } else if (lockTimer === 0) {
+      setIsLocked(false)
+      setLoginAttempts(0)
+    }
+    return () => clearInterval(interval)
+  }, [isLocked, lockTimer])
+
+  const connectSmartWatch = () => {
+    // In a real app, you'd implement Bluetooth pairing here
+    setIsWatchConnected(true)
+  }
+
+  useEffect(() => {
+    if (isWatchConnected) {
+      // Simulate receiving data from the smart watch
+      const interval = setInterval(() => {
+        setCaloriesBurned(prev => prev + Math.floor(Math.random() * 10))
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [isWatchConnected])
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    // In a real app, you'd implement the search functionality here
+    console.log('Searching for:', searchQuery)
+  }
+
+  const handleCoverPhotoUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setCoverPhoto(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleVideoSlideUpload = (index) => (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setVideoSlides(prev => {
+          const newSlides = [...prev]
+          newSlides[index] = reader.result
+          return newSlides
+        })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleMemberSelection = (memberId) => {
+    setSelectedMembers(prev => 
+      prev.includes(memberId)
+        ? prev.filter(id => id !== memberId)
+        : [...prev, memberId]
+    )
+  }
+
+  const sendMessage = () => {
+    // In a real app, you'd send the message to selected members here
+    console.log('Sending message to:', selectedMembers)
+    console.log('Message content:', messageContent)
+    setMessageContent('')
+    setSelectedMembers([])
+  }
+
+  const congratulateTopPerformer = () => {
+    const topPerformer = members.reduce((prev, current) => 
+      (prev.caloriesBurned > current.caloriesBurned) ? prev : current
+    )
+    setMessageContent(`Congratulations ${topPerformer.name} for burning the most calories!`)
+    setSelectedMembers([topPerformer.id])
+  }
+
+  if (!loggedIn) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <Card className="w-[350px]">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Workout Gym</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {isLocked ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Account Locked</AlertTitle>
+                  <AlertDescription>
+                    Too many failed attempts. Please try again in {Math.floor(lockTimer / 60)}:{(lockTimer % 60).toString().padStart(2, '0')} minutes.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label htmlFor="loginCode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Login Code</label>
+                    <Input
+                      id="loginCode"
+                      placeholder="Enter your login code"
+                      value={loginCode}
+                      onChange={(e) => setLoginCode(e.target.value)}
+                      disabled={isLocked}
+                    />
+                  </div>
+                  <Button className="w-full" onClick={handleLogin} disabled={isLocked}>
+                    Login
+                  </Button>
+                  {loginAttempts > 0 && (
+                    <p className="text-sm text-red-500">
+                      Incorrect code. Attempts remaining: {6 - loginAttempts}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Workout Gym</h1>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-500">
+              {currentTime.toLocaleString()}
+            </div>
+            {!isAdmin && (
+              <Button
+                onClick={connectSmartWatch}
+                disabled={isWatchConnected}
+                className="flex items-center space-x-2"
+              >
+                <Bluetooth className="h-5 w-5" />
+                <span>{isWatchConnected ? 'Watch Connected' : 'Connect Watch'}</span>
+              </Button>
+            )}
+            {isWatchConnected && !isAdmin && (
+              <div className="flex items-center space-x-2 text-green-600">
+                <Watch className="h-5 w-5" />
+                <span>{caloriesBurned} calories burned</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+      <main>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="home">Home</TabsTrigger>
+              <TabsTrigger value="videos">Training Videos</TabsTrigger>
+              {!isAdmin && <TabsTrigger value="progress">Progress Tracking</TabsTrigger>}
+              <TabsTrigger value="messages">Messages</TabsTrigger>
+              {isAdmin && <TabsTrigger value="admin">Admin Panel</TabsTrigger>}
+            </TabsList>
+            <TabsContent value="home">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Welcome to Workout Gym</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <img
+                    src={coverPhoto}
+                    alt="Workout Gym Cover"
+                    className="w-full h-auto rounded-lg shadow-lg mb-4"
+                  />
+                  {isAdmin && (
+                    <div className="mb-4">
+                      <Input
+                        type="file"
+                        onChange={handleCoverPhotoUpload}
+                        accept="image/*"
+                      />
+                    </div>
+                  )}
+                  <Carousel>
+                    <CarouselContent>
+                      {videoSlides.map((slide, index) => (
+                        <CarouselItem key={index}>
+                          {slide ? (
+                            <video src={slide} controls className="w-full aspect-video" />
+                          ) : (
+                            <div className="w-full aspect-video bg-gray-200 flex items-center justify-center">
+                              <Youtube className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                          {isAdmin && (
+                            <Input
+                              type="file"
+                              onChange={handleVideoSlideUpload(index)}
+                              accept="video/*"
+                              className="mt-2"
+                            />
+                          )}
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                  <p className="mt-4">Start your fitness journey with our personalized training programs and expert guidance.</p>
+                  <div className="mt-4 flex justify-center space-x-4">
+                    <a
+                      href="http://www.facebook.com/profile.php?id=100054406724700"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800"
+                    >
+                      <Facebook className="h-5 w-5" />
+                      <span>Follow us on Facebook</span>
+                    </a>
+                    <a
+                      href="https://www.youtube.com/channel/placeholder"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-2 text-red-600 hover:text-red-800"
+                    >
+                      <Youtube className="h-5 w-5" />
+                      <span>Subscribe on YouTube</span>
+                    </a>
+                    <a
+                      href="tel:4030707"
+                      className="inline-flex items-center space-x-2 text-green-600 hover:text-green-800"
+                    >
+                      <Phone className="h-5 w-5" />
+                      <span>Call us: 403-0707</span>
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="videos">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Training Videos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSearch} className="mb-4">
+                    <div className="flex space-x-2">
+                      <Input
+                        type="text"
+                        placeholder="Search for training videos"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-grow"
+                      />
+                      <Button type="submit">
+                        <Search className="h-4 w-4 mr-2" />
+                        Search
+                      </Button>
+                    </div>
+                  </form>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((video) => (
+                      <div key={video} className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
+                        <Youtube className="h-12 w-12 text-gray-400" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            {!isAdmin && (
+              <TabsContent value="progress">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Progress Tracking</CardTitle>
+                  
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Daily Goal Progress</h3>
+                        <Progress value={caloriesBurned} max={1000} className="w-full" />
+                        <p className="text-sm text-gray-500 mt-1">{caloriesBurned} / 1000 calories burned</p>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Weekly Exercise Summary</h3>
+                        <div style={{ width: '100%', height: 300 }}>
+                          <ResponsiveContainer>
+                            <LineChart data={exerciseData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip />
+                              <Legend />
+                              <Line type="monotone" dataKey="calories" stroke="#8884d8" activeDot={{ r: 8 }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <FileText className="h-6 w-6 text-gray-400" />
+                        <span>Weight and Body Fat Monitoring PDF</span>
+                      </div>
+                      <Button className="w-full">Upload Progress Photo</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+            <TabsContent value="messages">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Messages from Trainer</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((message) => (
+                      <div key={message} className="flex items-start space-x-4">
+                        <MessageSquare className="h-6 w-6 text-gray-400 mt-1" />
+                        <div>
+                          <p className="font-semibold">Message {message}</p>
+                          <p className="text-sm text-gray-500">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            {isAdmin && (
+              <TabsContent value="admin">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Admin Panel</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Send Message to Members</h3>
+                        <div className="space-y-2">
+                          {members.map((member) => (
+                            <div key={member.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`member-${member.id}`}
+                                checked={selectedMembers.includes(member.id)}
+                                onCheckedChange={() => handleMemberSelection(member.id)}
+                              />
+                              <label htmlFor={`member-${member.id}`}>{member.name}</label>
+                            </div>
+                          ))}
+                        </div>
+                        <Textarea
+                          placeholder="Type your message here"
+                          value={messageContent}
+                          onChange={(e) => setMessageContent(e.target.value)}
+                          className="mt-2"
+                        />
+                        <Button onClick={sendMessage} className="mt-2">
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Message
+                        </Button>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Top Performer</h3>
+                        <Button onClick={congratulateTopPerformer}>
+                          Congratulate Top Performer
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
+      </main>
+    </div>
+  )
+}
